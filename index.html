@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+
+    <!-- CSS only -->
+
+</head>
+<body>
+    <header>
+        <h1>Sudoku</h1>
+        <div class="setup-game">
+            <div class="diff">
+                <h3>Choose Difficulty : </h3>
+                <label><input id ="diff-1" type="radio" class= "radio" name="diff" value="easy" checked>Easy</label>
+                <label><input id ="diff-2" type="radio" class= "radio" name="diff" value="Medium" >Medium</label>
+                <label><input id ="diff-3" type="radio" class= "radio" name="diff" value="Hard" >Hard</label>
+            </div>
+            <div class="time">
+                <h3>Choose Time : </h3>
+                <label><input id ="time-1" type="radio" class= "radio" name="time" value="three" checked >3 min</label>
+                <label><input id ="time-2" type="radio" class= "radio" name="time" value="five" >5 min</label>
+                <label><input id ="time-3" type="radio" class= "radio" name="time" value="ten" >10 min</label>
+            </div>
+            <div class="theme">
+                <h3>Choose Theme : </h3>
+                <label><input id ="theme-1" type="radio" class= "radio" name="theme" value="light" checked>Light</label>
+                <label><input id ="theme-2" type="radio" class= "radio" name="theme" value="dark">Dark</label>
+
+            </div>
+        </div>
+        <button type="button" class="btn" id = "start-btn">Start New Game</button>
+    </header>
+    <section>
+        <div id="stats">
+            <p id="timer"></p>
+            <p id="lives"></p>
+        </div>
+        <div id="game">
+            <div id="board"></div>
+            <div id="number-container" class="hidden">
+                <p id="one">1</p>
+                <p id="two">2</p>
+                <p id="three">3</p>
+                <p id="four">4</p>
+                <p id="five">5</p>
+                <p id="six">6</p>
+                <p id="seven">7</p>
+                <p id="eight">8</p>
+                <p id="nine">9</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>Made By Raj Pawan Shukla</p>
+        <strong><a href="facebook.com" ><i class="fab fa-facebook"></i></a></strong>
+
+    </footer>
+
+    <script src="index.js"></script>
+</body>
+</html>
