@@ -1,12 +1,12 @@
-const easy = [
+let easy = [
     "6------7------5-2------1---362----81--96-----71--9-4-5-2---651---78----345-------",
     "685329174971485326234761859362574981549618732718293465823946517197852643456137298"
   ];
-  const medium = [
+  let medium = [
     "--9-------4----6-758-31----15--4-36-------4-8----9-------75----3-------1--2--3--",
     "619472583243985617587316924158247369926531478734698152891754236365829741472163895"
   ];
-  const hard = [
+  let hard = [
     "-1-5-------97-42----5----7-5---3---7-6--2-41---8--5---1-4------2-3-----9-7----8--",
     "712583694639714258845269173521436987367928415498175326184697532253841769976352841"
   ];
@@ -42,16 +42,14 @@ const easy = [
   }
 
   function startGame(){
-      let board
-      if(id("diff-1").checked) board = easy[0];
-      else if(id("diff-2").checked) board = medium[0];
-      else board = hard[0];
+      let board;
+      if(id("diff-1").checked){ getNewBoard("easy"); board = easy[0];}
+      else if(id("diff-2").checked){ getNewBoard("medium"); board = medium[0];}
+      else { getNewBoard("hard"); board = hard[0];}
       
       lives = 3;
       disableSelect = false;
       id("lives").textContent = "Lives: ♥ ♥ ♥ ";
-
-      
       generateBoard(board);
 
       startTimer();
@@ -95,11 +93,10 @@ const easy = [
   }
   function generateBoard(board){
       clearPrevious();
-
       let idCount = 0;
       for(let i = 0; i < 81; i++){
           let tile = document.createElement("p");
-          if(board.charAt(i) != "-"){
+          if(board.charAt(i) != "-" && board.charAt(i) != "0"){
             tile.textContent = board.charAt(i);
           } else {
                     tile.addEventListener("click", function(){
@@ -191,6 +188,7 @@ const easy = [
           if(tile[i].textContent === "") return false;
       }
       return true;
+      
   }
 
   function endGame(){
@@ -237,4 +235,40 @@ const easy = [
 
   function qsa(selector){
       return document.querySelectorAll(selector);
+  }
+ 
+
+
+
+  //api calls for new board
+  async function getNewBoard(difficulty){
+    let response = await fetch("https://sugoku.herokuapp.com/board?difficulty="+difficulty);
+    let data = await response.json();
+    unsolved = data.board.map((e)=> e.join("")).join("");
+
+    const encodeBoard = (board) => board.reduce((result, row, i) => result + `%5B${encodeURIComponent(row)}%5D${i === board.length -1 ? '' : '%2C'}`, '')
+    const encodeParams = (params) => 
+    Object.keys(params)
+    .map(key => key + '=' + `%5B${encodeBoard(params[key])}%5D`)
+    .join('&');
+    
+    fetch('https://sugoku.herokuapp.com/solve', {
+    method: 'POST',
+    body: encodeParams(data),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  })
+    .then(response => response.json())
+    .then((response) =>{
+      solved = response.solution.map(e=>e.join("")).join("");
+    })
+    .catch(console.warn)
+    try{
+    let board = [unsolved,solved];
+    if(difficulty == "easy") easy = board;
+    else if(difficulty == "medium") medium = board;
+    else hard = board;
+    }
+    catch(err){
+        console.log(err);
+    }
   }
