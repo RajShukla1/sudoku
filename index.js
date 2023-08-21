@@ -1,5 +1,3 @@
-
-
 let timeRemaining;
 let lives;
 let timer;
@@ -11,26 +9,25 @@ let medium;
 let hard;
 let solved;
 
-  id("start-btn").addEventListener("click", startGame);
+id("start-btn").addEventListener("click", startGame);
 
-  for (let i = 0; i < id("number-container").children.length; i++) {
-    id("number-container").children[i].addEventListener("click", function () {
-      if (!disableSelect) {
-        if (this.classList.contains("selected")) {
-          this.classList.remove("selected");
-          selectedNum = null;
-        } else {
-          for (let i = 0; i < 9; i++) {
-            id("number-container").children[i].classList.remove("selected");
-          }
-          this.classList.add("selected");
-          selectedNum = this;
-          updateMove();
+for (let i = 0; i < id("number-container").children.length; i++) {
+  id("number-container").children[i].addEventListener("click", function () {
+    if (!disableSelect) {
+      if (this.classList.contains("selected")) {
+        this.classList.remove("selected");
+        selectedNum = null;
+      } else {
+        for (let i = 0; i < 9; i++) {
+          id("number-container").children[i].classList.remove("selected");
         }
+        this.classList.add("selected");
+        selectedNum = this;
+        updateMove();
       }
-    });
-  }
-
+    }
+  });
+}
 
 async function startGame() {
   let board;
@@ -116,12 +113,16 @@ function generateBoard(board) {
     idCount++;
 
     tile.classList.add("tile");
-
-    if ((tile.id > 17 && tile.id < 27) || (tile.id > 44 && tile.id < 54)) {
+    //creating dark borders to differentiate
+    if ((tile.id > 17 && tile.id < 27) || (tile.id > 44 && tile.id < 54) ||(tile.id > 71 && tile.id < 81)) {
       tile.classList.add("bottomBorder");
     }
-
-    if ((tile.id + 1) % 9 == 3 || (tile.id + 1) % 9 == 6) {
+    if (tile.id >= 0 && tile.id < 9) {
+      tile.classList.add("topBorder");
+    }
+    if(tile.id % 9 == 0)
+    tile.classList.add("leftBorder");
+    if ((tile.id + 1) % 9 == 3 || (tile.id + 1) % 9 == 6 || (tile.id + 1) % 9 == 0) {
       tile.classList.add("rightBorder");
     }
 
@@ -240,7 +241,7 @@ async function getNewBoard(difficulty) {
       .map((key) => key + "=" + `%5B${encodeBoard(params[key])}%5D`)
       .join("&");
 
-      //api for getting right answer for puzzle
+  //api for getting right answer for puzzle
   fetch("https://sugoku.onrender.com/solve", {
     method: "POST",
     body: encodeParams(data),
@@ -274,7 +275,6 @@ function qs(selector) {
 function qsa(selector) {
   return document.querySelectorAll(selector);
 }
-
 
 // let easy = [
 //   "6------7------5-2------1---362----81--96-----71--9-4-5-2---651---78----345-------",
