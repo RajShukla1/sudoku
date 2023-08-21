@@ -2,6 +2,9 @@ body{
     background-color: white;
     
 }
+label{
+    margin-left: 5px;
+}
 .hidden{
     display: none;
 }
@@ -186,12 +189,27 @@ section{
         height: 19px;
         font-size: 12pt;
     }
+    #one{
+        margin-top: 25px;
+    }
     #number-container > p {
-        width: 15px;
-        height: 15px;
-        font-size: 12pt;
-        margin-left: 25px;
-        margin-top: 9px;
-        margin-bottom: 3px;
+        width: 14px;
+        height: 14px;
+        font-size: 10pt;
+        margin-left: 15px;
+        /* margin-top: 11px; */
+        /* margin-bottom: 3px; */
+    }
+    .rightBorder{
+        border-right:  2px solid black;
+    }
+    .bottomBorder{
+        border-bottom: 2px solid black;
+    }
+    .leftBorder{
+        border-left: 2px solid black;
+    }
+    .topBorder{
+        border-top: 2px solid black;
     }
 }
