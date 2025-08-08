@@ -1,290 +1,356 @@
-let timeRemaining;
-let lives;
-let timer;
-let selectedNum;
-let selectedTile;
-let disableSelect;
-let easy;
-let medium;
-let hard;
-let solved;
+/* Responsive Sudoku — script.js
+   - Local generator & solver (backtracking)
+   - Click tile -> type 1-9 or use number pad
+   - New Game (difficulty), Solve, Hint
+   - Timer & Lives
+*/
 
-id("start-btn").addEventListener("click", startGame);
+///// DOM helpers /////
+const qs = (s) => document.querySelector(s);
+const qsa = (s) => Array.from(document.querySelectorAll(s));
+const id = (s) => document.getElementById(s);
 
-for (let i = 0; i < id("number-container").children.length; i++) {
-  id("number-container").children[i].addEventListener("click", function () {
-    if (!disableSelect) {
-      if (this.classList.contains("selected")) {
-        this.classList.remove("selected");
-        selectedNum = null;
-      } else {
-        for (let i = 0; i < 9; i++) {
-          id("number-container").children[i].classList.remove("selected");
-        }
-        this.classList.add("selected");
-        selectedNum = this;
-        updateMove();
-      }
-    }
-  });
+///// UI elements /////
+const boardEl = id("board");
+const newGameBtn = id("newGame");
+const solveBtn = id("solveBtn");
+const hintBtn = id("hintBtn");
+const difficultySel = id("difficulty");
+const timeLimitSel = id("timeLimit");
+const timerEl = id("timer");
+const livesEl = id("lives");
+const numpad = id("numpad");
+const eraseBtn = id("erase");
+const clearSelBtn = id("clearSel");
+
+///// Game state /////
+let selectedTile = null;
+let selectedNumButton = null;
+let disableSelect = false;
+let timerInterval = null;
+let timeRemaining = 0;
+let lives = 3;
+let currentPuzzle = null;  // 81-char '-' for blank
+let currentSolution = null; // 81-digit string
+
+///// Utilities /////
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+function shuffle(arr){ for (let i = arr.length -1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]];} return arr; }
+
+///// Grid helpers /////
+function makeEmptyGrid(){ return Array.from({length:9}, ()=>Array(9).fill(0)); }
+function gridToString(grid){ return grid.flat().map(v => (v===0 ? "-" : String(v))).join(""); }
+function gridToDigits(grid){ return grid.flat().map(v => String(v)).join(""); }
+
+///// Solver (backtracking) /////
+function isSafe(grid, r, c, num){
+    for (let x=0;x<9;x++) if (grid[r][x]===num || grid[x][c]===num) return false;
+    const sr = Math.floor(r/3)*3, sc = Math.floor(c/3)*3;
+    for (let i=0;i<3;i++) for (let j=0;j<3;j++) if (grid[sr+i][sc+j]===num) return false;
+    return true;
 }
-
-async function startGame() {
-  let board;
-  if (id("diff-1").checked) {
-    await getNewBoard("easy");
-    board = easy[0];
-  } else if (id("diff-2").checked) {
-    await getNewBoard("medium");
-    board = medium[0];
-  } else {
-    await getNewBoard("hard");
-    board = hard[0];
-  }
-
-  lives = 3;
-  disableSelect = false;
-  id("lives").textContent = "Lives: ♥ ♥ ♥ ";
-  generateBoard(board);
-
-  startTimer();
-
-  if (id("theme-1").checked) {
-    //   qs("section").classList.add("light");
-    qs("section").classList.remove("dark");
-    qs("body").classList.remove("dark");
-    id("number-container").classList.remove("dark");
-  } else {
-    qs("section").classList.add("dark");
-    qs("body").classList.add("dark");
-    id("number-container").classList.add("dark");
-  }
-
-  id("number-container").classList.remove("hidden");
-}
-
-function startTimer() {
-  if (id("time-1").checked) timeRemaining = 180;
-  else if (id("time-2").checked) timeRemaining = 300;
-  else timeRemaining = 600;
-
-  id("timer").textContent = timeconversion(timeRemaining);
-  timer = setInterval(function () {
-    timeRemaining--;
-    if (timeRemaining === 0) endGame();
-    id("timer").textContent = timeconversion(timeRemaining);
-  }, 1000);
-}
-
-function timeconversion(time) {
-  let minutes = Math.floor(time / 60);
-  if (minutes < 10) minutes = "0" + minutes;
-  let seconds = time % 60;
-  if (seconds < 10) seconds = "0" + seconds;
-  return minutes + ":" + seconds;
-}
-function generateBoard(board) {
-  clearPrevious();
-  let idCount = 0;
-  for (let i = 0; i < 81; i++) {
-    let tile = document.createElement("p");
-    if (board.charAt(i) != "-" && board.charAt(i) != "0") {
-      tile.textContent = board.charAt(i);
-    } else {
-      tile.addEventListener("click", function () {
-        if (!disableSelect) {
-          if (tile.classList.contains("selected")) {
-            tile.classList.remove("selected");
-            selectedTile = null;
-          } else {
-            for (let i = 0; i < 81; i++) {
-              qsa(".tile")[i].classList.remove("selected");
+function solveGrid(grid){
+    for (let r=0;r<9;r++){
+        for (let c=0;c<9;c++){
+            if (grid[r][c]===0){
+                for (let num=1; num<=9; num++){
+                    if (isSafe(grid,r,c,num)){
+                        grid[r][c]=num;
+                        if (solveGrid(grid)) return true;
+                        grid[r][c]=0;
+                    }
+                }
+                return false;
             }
-            tile.classList.add("selected");
-            selectedTile = tile;
-            updateMove();
-          }
         }
-      });
     }
-
-    tile.id = idCount;
-
-    idCount++;
-
-    tile.classList.add("tile");
-    //creating dark borders to differentiate
-    if ((tile.id > 17 && tile.id < 27) || (tile.id > 44 && tile.id < 54) ||(tile.id > 71 && tile.id < 81)) {
-      tile.classList.add("bottomBorder");
-    }
-    if (tile.id >= 0 && tile.id < 9) {
-      tile.classList.add("topBorder");
-    }
-    if(tile.id % 9 == 0)
-    tile.classList.add("leftBorder");
-    if ((tile.id + 1) % 9 == 3 || (tile.id + 1) % 9 == 6 || (tile.id + 1) % 9 == 0) {
-      tile.classList.add("rightBorder");
-    }
-
-    id("board").appendChild(tile);
-  }
+    return true;
 }
 
-function updateMove() {
-  if (selectedTile && selectedNum) {
-    selectedTile.textContent = selectedNum.textContent;
-    if (id("theme-1").checked) {
-      selectedTile.classList.add("correct");
-      selectedTile.classList.remove("dark");
-    } else {
-      selectedTile.classList.add("dark");
+///// Generator /////
+function generateSolvedBoard(){
+    const grid = makeEmptyGrid();
+    // fill diagonal boxes with permutations
+    for (let box = 0; box < 9; box += 3){
+        const nums = shuffle([1,2,3,4,5,6,7,8,9].slice());
+        let idx = 0;
+        for (let r=0;r<3;r++) for (let c=0;c<3;c++) grid[box+r][box+c] = nums[idx++];
     }
+    solveGrid(grid);
+    return grid;
+}
 
-    if (checkCorrect(selectedTile)) {
-      selectedTile.classList.remove("selected");
-      selectedNum.classList.remove("selected");
+function removeCells(grid, removals){
+    const puzzle = grid.map(r => r.slice());
+    const cells = [];
+    for (let r=0;r<9;r++) for (let c=0;c<9;c++) cells.push([r,c]);
+    shuffle(cells);
+    let removed = 0;
+    while (removed < removals && cells.length){
+        const [r,c] = cells.pop();
+        if (puzzle[r][c] !== 0){
+            puzzle[r][c] = 0;
+            removed++;
+        }
+    }
+    return puzzle;
+}
 
-      selectedNum = null;
-      selectedTile = null;
-      if (checkDone()) {
-        endGame();
-      }
-    } else {
-      disableSelect = true;
+function difficultyToRemovals(diff){
+    if (diff === "easy") return 40;
+    if (diff === "medium") return 47;
+    return 53;
+}
 
-      selectedTile.classList.add("incorrect");
-      selectedTile.classList.remove("correct");
+///// Create puzzle (fast, not uniqueness-guaranteed) /////
+function createPuzzle(difficulty){
+    const solvedGrid = generateSolvedBoard();
+    const removals = difficultyToRemovals(difficulty);
+    const puzzleGrid = removeCells(solvedGrid, removals);
+    return {
+        puzzleStr: gridToString(puzzleGrid),
+        solutionStr: gridToDigits(solvedGrid)
+    };
+}
 
-      setTimeout(function () {
-        lives--;
-        if (lives === 0) {
-          endGame();
+///// Render board UI /////
+function clearBoard(){
+    boardEl.innerHTML = "";
+    selectedTile = null;
+    selectedNumButton = null;
+    qsa(".num").forEach(n => n.classList.remove("selected"));
+}
+
+function renderBoard(boardStr){
+    clearBoard();
+    // create 81 tiles
+    for (let i=0;i<81;i++){
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.id = `t${i}`;
+        const ch = boardStr.charAt(i);
+        if (ch !== "-" && ch !== "0"){
+            tile.textContent = ch;
+            tile.classList.add("fixed");
         } else {
-          if (lives === 2) {
-            id("lives").textContent = "Lives : " + "♥ ♥";
-          } else if (lives === 1) {
-            id("lives").textContent = "Lives : " + "♥";
-          }
-
-          disableSelect = false;
+            tile.textContent = "";
+            tile.addEventListener("click", () => {
+                if (disableSelect) return;
+                if (tile.classList.contains("fixed")) return;
+                // toggle selection
+                if (selectedTile && selectedTile === tile){
+                    tile.classList.remove("selected");
+                    selectedTile = null;
+                } else {
+                    qsa(".tile").forEach(t => t.classList.remove("selected"));
+                    tile.classList.add("selected");
+                    selectedTile = tile;
+                }
+            });
         }
-        selectedTile.classList.remove("incorrect");
-        selectedTile.classList.remove("selected");
-        selectedNum.classList.remove("selected");
-        selectedTile.textContent = "";
-        selectedNum = null;
-        selectedTile = null;
-      }, 1000);
+        // borders for 3x3 boxes
+        const row = Math.floor(i / 9);
+        const col = i % 9;
+        if (row % 3 === 0) tile.classList.add("topBorder");
+        if (row % 3 === 2) tile.classList.add("bottomBorder");
+        if (col % 3 === 0) tile.classList.add("leftBorder");
+        if (col % 3 === 2) tile.classList.add("rightBorder");
+        boardEl.appendChild(tile);
     }
-  }
-}
-function checkDone() {
-  let tile = qsa(".tile");
-  for (let i = 0; i < tile.length; i++) {
-    if (tile[i].textContent === "") return false;
-  }
-  return true;
 }
 
-function endGame() {
-  disableSelect = true;
-  clearTimeout(timer);
-  if (lives === 0 || timeRemaining === 0) {
-    id("lives").textContent = "You Lost ";
-  } else {
-    id("lives").textContent = "You Won ☻";
-  }
+///// Timer & lives /////
+function startTimer(seconds){
+    if (timerInterval) clearInterval(timerInterval);
+    timeRemaining = seconds;
+    updateTimerUI();
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateTimerUI();
+        if (timeRemaining <= 0){
+            clearInterval(timerInterval);
+            loseGame();
+        }
+    }, 1000);
 }
-function checkCorrect(tile) {
-  let solution;
-  if (id("diff-1").checked) solution = easy[1];
-  else if (id("diff-2").checked) solution = medium[1];
-  else solution = hard[1];
-
-  if (solution.charAt(tile.id) === tile.textContent) return true;
+function updateTimerUI(){ timerEl.textContent = formatTime(timeRemaining); }
+function formatTime(sec){
+    const m = Math.floor(sec/60); const s = sec%60;
+    return `${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
 }
-function clearPrevious() {
-  let tiles = qsa(".tile");
-  for (let i = 0; i < tiles.length; i++) {
-    tiles[i].remove();
-  }
-
-  if (timer) clearTimeout(timer);
-
-  for (let i = 0; i < id("number-container").children.length; i++) {
-    id("number-container").children[i].classList.remove("selected");
-  }
-
-  selectedTile = null;
-  selectedNum = null;
+function setLives(n){
+    lives = n; if (lives <= 0){ livesEl.textContent = "You Lost"; } else { livesEl.textContent = "Lives: " + "♥ ".repeat(lives).trim(); }
 }
 
-//api calls for new board
-async function getNewBoard(difficulty) {
-  let response = await fetch(
-    "https://sugoku.onrender.com/board?difficulty=" + difficulty
-  );
-  let data = await response.json();
-  unsolved = data.board.map((e) => e.join("")).join("");
-
-  const encodeBoard = (board) =>
-    board.reduce(
-      (result, row, i) =>
-        result +
-        `%5B${encodeURIComponent(row)}%5D${
-          i === board.length - 1 ? "" : "%2C"
-        }`,
-      ""
-    );
-  const encodeParams = (params) =>
-    Object.keys(params)
-      .map((key) => key + "=" + `%5B${encodeBoard(params[key])}%5D`)
-      .join("&");
-
-  //api for getting right answer for puzzle
-  fetch("https://sugoku.onrender.com/solve", {
-    method: "POST",
-    body: encodeParams(data),
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  })
-    .then((response) => response.json())
-    .then((response) => {
-      console.log(response);
-      solved = response.solution.map((e) => e.join("")).join("");
-    })
-    .catch(console.warn);
-  try {
-    let board = [unsolved, solved];
-    if (difficulty == "easy") easy = board;
-    else if (difficulty == "medium") medium = board;
-    else hard = board;
-  } catch (err) {
-    console.log(err);
-  }
+///// Game actions /////
+function newGame(){
+    disableSelect = false;
+    setLives(3);
+    const diff = difficultySel.value;
+    const timeLimit = parseInt(timeLimitSel.value, 10) || 300;
+    const {puzzleStr, solutionStr} = createPuzzle(diff);
+    currentPuzzle = puzzleStr;
+    currentSolution = solutionStr;
+    renderBoard(puzzleStr);
+    startTimer(timeLimit);
 }
 
-//
-function id(id) {
-  return document.getElementById(id);
+function placeNumberOnSelected(num){
+    if (!selectedTile || disableSelect) return;
+    if (selectedTile.classList.contains("fixed")) return;
+    selectedTile.textContent = String(num);
+    // validate
+    const idx = parseInt(selectedTile.id.slice(1),10);
+    if (currentSolution && currentSolution.charAt(idx) === String(num)){
+        // correct
+        selectedTile.classList.remove("selected");
+        selectedTile.classList.add("correct");
+        if (selectedNumButton){ selectedNumButton.classList.remove("selected"); selectedNumButton = null; }
+        selectedTile = null;
+        if (isBoardComplete()) winGame();
+    } else {
+        // incorrect
+        selectedTile.classList.add("incorrect");
+        disableSelect = true;
+        setTimeout(() => {
+            selectedTile.classList.remove("incorrect");
+            selectedTile.classList.remove("selected");
+            selectedTile.textContent = "";
+            selectedTile = null;
+            if (selectedNumButton){ selectedNumButton.classList.remove("selected"); selectedNumButton = null; }
+            setLives(lives - 1);
+            if (lives <= 0) { loseGame(); } else { disableSelect = false; }
+        }, 800);
+    }
 }
 
-function qs(selector) {
-  return document.querySelector(selector);
+function eraseSelected(){
+    if (!selectedTile || selectedTile.classList.contains("fixed")) return;
+    selectedTile.textContent = "";
 }
 
-function qsa(selector) {
-  return document.querySelectorAll(selector);
+function clearSelection(){
+    if (selectedTile){ selectedTile.classList.remove("selected"); selectedTile = null; }
+    if (selectedNumButton){ selectedNumButton.classList.remove("selected"); selectedNumButton = null; }
 }
 
-// let easy = [
-//   "6------7------5-2------1---362----81--96-----71--9-4-5-2---651---78----345-------",
-//   "685329174971485326234761859362574981549618732718293465823946517197852643456137298",
-// ];
-// let medium = [
-//   "--9-------4----6-758-31----15--4-36-------4-8----9-------75----3-------1--2--3--",
-//   "619472583243985617587316924158247369926531478734698152891754236365829741472163895",
-// ];
-// let hard = [
-//   "-1-5-------97-42----5----7-5---3---7-6--2-41---8--5---1-4------2-3-----9-7----8--",
-//   "712583694639714258845269173521436987367928415498175326184697532253841769976352841",
-// ];
+function giveHint(){
+    if (!currentSolution) return;
+    // pick a random empty tile (not fixed)
+    const tiles = qsa(".tile").filter(t => !t.classList.contains("fixed") && !t.textContent);
+    if (!tiles.length) return;
+    const pick = tiles[Math.floor(Math.random()*tiles.length)];
+    const idx = parseInt(pick.id.slice(1),10);
+    pick.textContent = currentSolution.charAt(idx);
+    pick.classList.add("correct");
+    // penalty
+    setLives(Math.max(0, lives-1));
+    if (lives <= 0) loseGame();
+}
+
+function solvePuzzle(){
+    if (!currentSolution) return;
+    qsa(".tile").forEach((tile, i) => {
+        tile.textContent = currentSolution.charAt(i);
+        tile.classList.add("correct");
+    });
+    disableSelect = true;
+    if (timerInterval) clearInterval(timerInterval);
+    livesEl.textContent = "Solved";
+}
+
+function isBoardComplete(){
+    const tiles = qsa(".tile");
+    for (let i=0;i<tiles.length;i++){
+        if (!tiles[i].textContent || tiles[i].textContent === "") return false;
+    }
+    // we can also validate with solution
+    for (let i=0;i<tiles.length;i++){
+        if (tiles[i].textContent !== currentSolution.charAt(i)) return false;
+    }
+    return true;
+}
+
+function winGame(){
+    disableSelect = true;
+    if (timerInterval) clearInterval(timerInterval);
+    livesEl.textContent = "You Won ☻";
+}
+
+function loseGame(){
+    disableSelect = true;
+    if (timerInterval) clearInterval(timerInterval);
+    // reveal solution
+    if (currentSolution){
+        qsa(".tile").forEach((t, i) => {
+            t.textContent = currentSolution.charAt(i);
+            t.classList.add("fixed");
+        });
+    }
+    livesEl.textContent = "You Lost";
+}
+
+///// Input handling: numpad & keyboard /////
+numpad.addEventListener("click", (e) => {
+    const btn = e.target.closest(".num");
+    if (btn){
+        const val = btn.dataset.num;
+        if (!val) return;
+        // toggle selection of number button
+        if (selectedNumButton === btn){
+            btn.classList.remove("selected");
+            selectedNumButton = null;
+        } else {
+            qsa(".num").forEach(n => n.classList.remove("selected"));
+            btn.classList.add("selected");
+            selectedNumButton = btn;
+            // if a tile is selected, place immediately
+            if (selectedTile) placeNumberOnSelected(val);
+        }
+    }
+});
+eraseBtn.addEventListener("click", () => eraseSelected());
+clearSelBtn.addEventListener("click", () => clearSelection());
+
+document.addEventListener("keydown", (e) => {
+    if (disableSelect) return;
+    const k = e.key;
+    if (/^[1-9]$/.test(k)){
+        // if a number button is selected, clear it because keyboard overrides
+        if (selectedNumButton){ selectedNumButton.classList.remove("selected"); selectedNumButton = null; }
+        // if a tile selected, place; else select first empty tile
+        if (!selectedTile){
+            // find first non-fixed empty tile and select it (convenience)
+            const first = qsa(".tile").find(t => !t.classList.contains("fixed") && !t.textContent);
+            if (first){ first.classList.add("selected"); selectedTile = first; }
+        }
+        placeNumberOnSelected(k);
+    } else if (k === "Backspace" || k === "Delete"){
+        eraseSelected();
+    } else if (k === "Escape"){
+        clearSelection();
+    }
+});
+
+///// Button binding /////
+newGameBtn.addEventListener("click", () => {
+    clearSelection();
+    newGame();
+});
+hintBtn.addEventListener("click", () => {
+    giveHint();
+});
+solveBtn.addEventListener("click", () => {
+    solvePuzzle();
+});
+
+///// Initialize default small puzzle on load /////
+window.addEventListener("load", async () => {
+    // quick initial puzzle
+    const {puzzleStr, solutionStr} = createPuzzle(difficultySel.value);
+    currentPuzzle = puzzleStr;
+    currentSolution = solutionStr;
+    renderBoard(currentPuzzle);
+    setLives(3);
+    timerEl.textContent = formatTime(parseInt(timeLimitSel.value,10));
+});
