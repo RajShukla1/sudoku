@@ -1,73 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sudoku</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com"> -->
-    <!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> -->
-    <!-- <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet"> -->
-
-    <!-- CSS only -->
-
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Responsive Sudoku — Offline</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <header>
+<main>
+    <header class="topbar">
         <h1>Sudoku</h1>
-        <div class="setup-game">
-            <div class="diff">
-                <h3>Choose Difficulty</h3>
-                <label><input id ="diff-1" type="radio" class= "radio" name="diff" value="easy" checked>Easy</label>
-                <label><input id ="diff-2" type="radio" class= "radio" name="diff" value="Medium" >Medium</label>
-                <label><input id ="diff-3" type="radio" class= "radio" name="diff" value="Hard" >Hard</label>
-            </div>
-            <div class="time">
-                <h3>Choose Time</h3>
-                <label><input id ="time-1" type="radio" class= "radio" name="time" value="three" checked >3 min</label>
-                <label><input id ="time-2" type="radio" class= "radio" name="time" value="five" >5 min</label>
-                <label><input id ="time-3" type="radio" class= "radio" name="time" value="ten" >10 min</label>
-            </div>
-            <div class="theme">
-                <h3>Choose Theme</h3>
-                <label><input id ="theme-1" type="radio" class= "radio" name="theme" value="light" checked>Light</label>
-                <label><input id ="theme-2" type="radio" class= "radio" name="theme" value="dark">Dark</label>
 
+        <div class="controls">
+            <div class="group">
+                <label>Difficulty</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+
+            <div class="group">
+                <label>Time</label>
+                <select id="timeLimit">
+                    <option value="180">3 min</option>
+                    <option value="300" selected>5 min</option>
+                    <option value="600">10 min</option>
+                </select>
+            </div>
+
+            <div class="group buttons-row">
+                <button id="newGame" class="btn">New Game</button>
+                <button id="hintBtn" class="btn outline">Hint</button>
+                <button id="solveBtn" class="btn outline">Solve</button>
             </div>
         </div>
-        <button type="button" class="btn" id = "start-btn">Start New Game</button>
+
+        <div class="statusbar">
+            <div id="timer" class="status">00:00</div>
+            <div id="lives" class="status">Lives: ♥ ♥ ♥</div>
+        </div>
     </header>
-    <section>
-        <div id="stats">
-            <p id="timer"></p>
-            <p id="lives"></p>
-        </div>
-        <div id="game">
-            <div id="board"></div>
-            <div id="number-container" class="hidden">
-                <p id="one">1</p>
-                <p id="two">2</p>
-                <p id="three">3</p>
-                <p id="four">4</p>
-                <p id="five">5</p>
-                <p id="six">6</p>
-                <p id="seven">7</p>
-                <p id="eight">8</p>
-                <p id="nine">9</p>
+
+    <section class="game-area">
+        <div id="board" class="board" aria-label="Sudoku board"></div>
+
+        <aside class="right-panel">
+            <div class="numpad" id="numpad" aria-label="Number pad">
+                <button class="num btn" data-num="1">1</button>
+                <button class="num btn" data-num="2">2</button>
+                <button class="num btn" data-num="3">3</button>
+                <button class="num btn" data-num="4">4</button>
+                <button class="num btn" data-num="5">5</button>
+                <button class="num btn" data-num="6">6</button>
+                <button class="num btn" data-num="7">7</button>
+                <button class="num btn" data-num="8">8</button>
+                <button class="num btn" data-num="9">9</button>
+                <button id="erase" class="btn outline">Erase</button>
+                <button id="clearSel" class="btn outline">Clear</button>
             </div>
-        </div>
+
+            <div class="legend">
+                <p><strong>How to play</strong></p>
+                <ul>
+                    <li>Tap a cell to select it.</li>
+                    <li>Type 1–9 or tap a number to place it.</li>
+                    <li>Use Hint (costs a life) or Solve to reveal solution.</li>
+                </ul>
+            </div>
+        </aside>
     </section>
 
-    <footer>
-        <p>Made By Raj Pawan Shukla</p>
-        <strong><a href="facebook.com" ><i class="fab fa-facebook"></i></a></strong>
-
+    <footer class="footer">
+        <small>Made by Raj Pawan Shukla — Offline Sudoku</small>
     </footer>
+</main>
 
-    <script src="index.js"></script>
+<script src="index.js"></script>
 </body>
 </html>
